@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - FoodBridge{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Admin Dashboard</h2>
+        <p class="text-muted">Platform management and oversight</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ stats.total_donors }}</h3>
+                <p class="card-text">Total Donors</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ stats.total_charities }}</h3>
+                <p class="card-text">Verified Charities</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ stats.pending_charities }}</h3>
+                <p class="card-text">Pending Approval</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ stats.active_donations }}</h3>
+                <p class="card-text">Active Donations</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ stats.completed_donations }}</h3>
+                <p class="card-text">Completed Donations</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Charity Approvals -->
+{% if pending_charities %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Pending Charity Approvals</h5>
+                <span class="badge bg-warning">{{ pending_charities|length }} pending</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Organization Name</th>
+                                <th>Email</th>
+                                <th>City</th>
+                                <th>Registration Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for charity in pending_charities %}
+                            <tr>
+                                <td>
+                                    <strong>{{ charity.name }}</strong><br>
+                                    <small class="text-muted">{{ charity.username }}</small>
+                                </td>
+                                <td>{{ charity.email }}</td>
+                                <td>
+                                    {{ charity.city }}{% if charity.state %}, {{ charity.state }}{% endif %}
+                                    {% if charity.phone %}
+                                    <br><small class="text-muted">{{ charity.phone }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ charity.created_at.strftime('%m/%d/%Y') }}</td>
+                                <td>
+                                    <a href="{{ url_for('verify_charity', user_id=charity.id) }}" 
+                                       class="btn btn-sm btn-success"
+                                       onclick="return confirm('Verify {{ charity.name }} as a legitimate charity?')">
+                                        Verify
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Donations -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Donations</h5>
+            </div>
+            <div class="card-body">
+                {% if donations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Food Type</th>
+                                <th>Donor</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Posted Date</th>
+                                <th>Claimed By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for donation in donations %}
+                            <tr>
+                                <td>
+                                    <strong>{{ donation.food_type }}</strong><br>
+                                    <small class="text-muted">{{ donation.quantity }}</small>
+                                </td>
+                                <td>
+                                    {{ donation.donor.name }}<br>
+                                    <small class="text-muted">{{ donation.donor.email }}</small>
+                                </td>
+                                <td>
+                                    {{ donation.pickup_location }}<br>
+                                    <small class="text-muted">{{ donation.pickup_city }}, {{ donation.pickup_state }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if donation.status == 'available' %}bg-success
+                                        {% elif donation.status == 'claimed' %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ donation.status|title }}
+                                    </span>
+                                </td>
+                                <td>{{ donation.created_at.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>
+                                    {% if donation.claimer %}
+                                        {{ donation.claimer.name }}<br>
+                                        <small class="text-muted">{{ donation.claimed_at.strftime('%m/%d %I:%M %p') }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Not claimed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted">No donations have been posted yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Tools -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">Platform Management</h6>
+                <ul class="list-unstyled mb-0">
+                    <li>• Review and verify charity organizations</li>
+                    <li>• Monitor donation activity and completion rates</li>
+                    <li>• Ensure platform safety and integrity</li>
+                    <li>• Support users with issues or questions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">Key Metrics to Watch</h6>
+                <ul class="list-unstyled mb-0">
+                    <li>• Charity verification response time</li>
+                    <li>• Donation claim and completion rates</li>
+                    <li>• Geographic distribution of users</li>
+                    <li>• User engagement and retention</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
